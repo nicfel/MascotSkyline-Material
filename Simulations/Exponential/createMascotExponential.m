@@ -72,7 +72,7 @@ for i = 1 : length(tree_files)
         fprintf(g,'<map name="prior">beast.math.distributions.Prior</map>\n');
         fprintf(g,'<map name="Normal">beast.math.distributions.Normal</map>\n');
 
-        fprintf(g,'\t<run id="mcmc" spec="MCMC" chainLength="1000000">\n');
+        fprintf(g,'\t<run id="mcmc" spec="MCMC" chainLength="250000">\n');
         fprintf(g,'\t\t<state id="state" storeEvery="5000">\n');
         fprintf(g,'\t\t\t<stateNode id="tree" spec="beast.app.mascot.beauti.TreeWithTrait">\n');
         fprintf(g,'\t\t\t\t<typeTrait id="typeTraitSet.t" spec="beast.evolution.tree.TraitSet" traitname="type" value="');
@@ -89,9 +89,9 @@ for i = 1 : length(tree_files)
         fprintf(g,'\t\t\t\t</typeTrait>\n');
         fprintf(g,'\t\t\t</stateNode>\n');        
         
-        fprintf(g,'\t\t\t<parameter id="Nenull.1" name="stateNode" dimension="1">7</parameter>\n');
-        fprintf(g,'\t\t\t<parameter id="Nenull.2" name="stateNode" dimension="1">3</parameter>\n');
-        fprintf(g,'\t\t\t<parameter id="Nenull.3" name="stateNode" dimension="1">1</parameter>\n');
+        fprintf(g,'\t\t\t<parameter id="Nenull.1" name="stateNode" dimension="1">0</parameter>\n');
+        fprintf(g,'\t\t\t<parameter id="Nenull.2" name="stateNode" dimension="1">0</parameter>\n');
+        fprintf(g,'\t\t\t<parameter id="Nenull.3" name="stateNode" dimension="1">0</parameter>\n');
         fprintf(g,'\t\t\t<parameter id="growth.1" name="stateNode" dimension="1">0.2</parameter>\n');
         fprintf(g,'\t\t\t<parameter id="growth.2" name="stateNode" dimension="1">0.1</parameter>\n');
         fprintf(g,'\t\t\t<parameter id="growth.3" name="stateNode" dimension="1">0</parameter>\n');
@@ -113,17 +113,35 @@ for i = 1 : length(tree_files)
 %         fprintf(g,'\t\t\t\t\t<distr spec="beast.math.distributions.OneOnX"/>\n');
 %         fprintf(g,'\t\t\t\t</distribution>\n');
 
+        fprintf(g,'\t\t\t\t<distribution spec=''beast.math.distributions.Prior'' x="@migration">\n');
+        fprintf(g,'\t\t\t\t<distr spec="beast.math.distributions.Normal"   mean="-1" sigma="1.0"/>\n');
+        fprintf(g,'\t\t\t\t</distribution>\n');
+
+
+        fprintf(g,'\t\t\t\t<distribution spec=''beast.math.distributions.Prior'' x="@Nenull.1">\n');
+        fprintf(g,'\t\t\t\t\t<distr spec="beast.math.distributions.Normal"  mean="0" sigma="1.0"/>\n');
+        fprintf(g,'\t\t\t\t</distribution>\n');
+
+        fprintf(g,'\t\t\t\t<distribution spec=''beast.math.distributions.Prior'' x="@Nenull.2">\n');
+        fprintf(g,'\t\t\t\t\t<distr spec="beast.math.distributions.Normal"  mean="0" sigma="1.0"/>\n');
+        fprintf(g,'\t\t\t\t</distribution>\n');
+
+        fprintf(g,'\t\t\t\t<distribution spec=''beast.math.distributions.Prior'' x="@Nenull.3">\n');
+        fprintf(g,'\t\t\t\t\t<distr spec="beast.math.distributions.Normal"  mean="0" sigma="1.0"/>\n');
+        fprintf(g,'\t\t\t\t</distribution>\n');
+
+
 
         fprintf(g,'\t\t\t\t<distribution spec=''beast.math.distributions.Prior'' x="@growth.1">\n');
-        fprintf(g,'\t\t\t\t\t<distr spec="beast.math.distributions.Normal"  mean="0" sigma="1.0"/>\n');
+        fprintf(g,'\t\t\t\t\t<distr spec="beast.math.distributions.Normal"  mean="0.5" sigma="0.25"/>\n');
         fprintf(g,'\t\t\t\t</distribution>\n');
 
         fprintf(g,'\t\t\t\t<distribution spec=''beast.math.distributions.Prior'' x="@growth.2">\n');
-        fprintf(g,'\t\t\t\t\t<distr spec="beast.math.distributions.Normal"  mean="0" sigma="1.0"/>\n');
+        fprintf(g,'\t\t\t\t\t<distr spec="beast.math.distributions.Normal"  mean="0.5" sigma="0.25"/>\n');
         fprintf(g,'\t\t\t\t</distribution>\n');
 
         fprintf(g,'\t\t\t\t<distribution spec=''beast.math.distributions.Prior'' x="@growth.3">\n');
-        fprintf(g,'\t\t\t\t\t<distr spec="beast.math.distributions.Normal"  mean="0" sigma="1.0"/>\n');
+        fprintf(g,'\t\t\t\t\t<distr spec="beast.math.distributions.Normal"  mean="0.5" sigma="0.25"/>\n');
         fprintf(g,'\t\t\t\t</distribution>\n');
 
 
@@ -133,46 +151,31 @@ for i = 1 : length(tree_files)
         fprintf(g,'\t\t\t</distribution>\n');
         fprintf(g,'\t\t\t<distribution id="likelihood" spec="util.CompoundDistribution">\n');
         fprintf(g,'\t\t\t\t<distribution id="coalescent" spec="Mascot">\n');
-        fprintf(g,'\t\t\t\t\t<structuredTreeIntervals spec="StructuredTreeIntervals" id="TreeIntervals" tree="@tree"/>\n');
-        
-        fprintf(g,'\t\t\t\t\t<dynamics id="piecewiseConstant" spec="beast.mascot.dynamics.Parametric" forwardsMigration="@migration" dimension="0" typeTrait="@typeTraitSet.t">\n');
-        fprintf(g,'\t\t\t\t\t\t<parametricFunction id="expo.1" spec="beast.mascot.parametric.Exponential" NeNull="@Nenull.1" growthRate="@growth.1"/>\n');
-        fprintf(g,'\t\t\t\t\t\t<parametricFunction id="expo.2" spec="beast.mascot.parametric.Exponential" NeNull="@Nenull.2" growthRate="@growth.2"/>\n');
-        fprintf(g,'\t\t\t\t\t\t<parametricFunction id="expo.3" spec="beast.mascot.parametric.Exponential" NeNull="@Nenull.3" growthRate="@growth.3"/>\n');
-        fprintf(g,'\t\t\t\t\t\t<rateShifts id="rateshifts.t" spec="beast.mascot.skyline.RateShifts" tree="@tree">\n');
+        fprintf(g,'\t\t\t\t\t<structuredTreeIntervals spec="StructuredTreeIntervals" id="TreeIntervals" tree="@tree"/>\n');        
+        fprintf(g,'\t\t\t\t\t<dynamics id="piecewiseConstant" spec="beast.mascotskyline.dynamics.DynamicEffectivePopulationSizes" forwardsMigration="@migration" dimension="0" typeTrait="@typeTraitSet.t">\n');
+        fprintf(g,'\t\t\t\t\t\t<NeDynamics id="expo.1" spec="beast.mascotskyline.parametric.Exponential" NeNull="@Nenull.1" growthRate="@growth.1"/>\n');
+        fprintf(g,'\t\t\t\t\t\t<NeDynamics id="expo.2" spec="beast.mascotskyline.parametric.Exponential" NeNull="@Nenull.2" growthRate="@growth.2"/>\n');
+        fprintf(g,'\t\t\t\t\t\t<NeDynamics id="expo.3" spec="beast.mascotskyline.parametric.Exponential" NeNull="@Nenull.3" growthRate="@growth.3"/>\n');
+        fprintf(g,'\t\t\t\t\t\t<rateShifts id="rateshifts.t" spec="beast.mascotskyline.skyline.RateShifts" tree="@tree">\n');
         fprintf(g,'\t\t\t\t\t\t\t<parameter id="rateshifts" name="relativeRateShifts">0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.10 0.11 0.12 0.13 0.14 0.15 0.16 0.17 0.18 0.19 0.20 0.21 0.22 0.23 0.24 0.25 0.26 0.27 0.28 0.29 0.30 0.31 0.32 0.33 0.34 0.35 0.36 0.37 0.38 0.39 0.40 0.41 0.42 0.43 0.44 0.45 0.46 0.47 0.48 0.49 0.50 0.51 0.52 0.53 0.54 0.55 0.56 0.57 0.58 0.59 0.60 0.61 0.62 0.63 0.64 0.65 0.66 0.67 0.68 0.69 0.70 0.71 0.72 0.73 0.74 0.75 0.76 0.77 0.78 0.79 0.80 0.81 0.82 0.83 0.84 0.85 0.86 0.87 0.88 0.89 0.90 0.91 0.92 0.93 0.94 0.95 0.96 0.97 0.98 0.99 1.00 1.01</parameter>\n');
         fprintf(g,'\t\t\t\t\t\t</rateShifts>\n');
-        fprintf(g,'\t\t\t\t\t</dynamics>\n');
-        
+        fprintf(g,'\t\t\t\t\t</dynamics>\n');        
         fprintf(g,'\t\t\t\t</distribution>\n');
-        
-        
-%         fprintf(g,'\t\t\t\t<distribution id="logSmoothingPrior" spec="beast.mascot.skyline.LogSmoothingPrior" NeLog="@NeLog">\n');
-%         fprintf(g,'\t\t\t\t\t<Normal id="NormalDist.2" name="distr" mean="0.0" sigma="@Precision"/>\n');
-%         fprintf(g,'\t\t\t\t\t<Normal id="NormalDist.3" name="initialDistr" mean="0.0" sigma="@Precision"/>\n');
-%         fprintf(g,'\t\t\t\t\t<rateShifts id="rateshifts.t" spec="beast.mascot.skyline.RateShifts">\n');
-%         fprintf(g,'\t\t\t\t\t\t<parameter id="rateshifts" name="absoluteRateShifts">%s</parameter>\n', sprintf('%.2f ', [1:1:20]));
-%         fprintf(g,'\t\t\t\t\t</rateShifts>\n');
-%         fprintf(g,'\t\t\t\t</distribution>\n');
         fprintf(g,'\t\t\t</distribution>\n');
         fprintf(g,'\t\t</distribution>\n');
 
-
-		fprintf(g,'\t\t<operator id="NenullScaler.1" spec="ScaleOperator" scaleFactor="0.8" parameter="@Nenull.1" weight="3.0"/>\n');
-		fprintf(g,'\t\t<operator id="NeScalerScaler1" spec="RealRandomWalkOperator" parameter="@growth.1" windowSize="0.1" weight="3.0"/>\n');
-
-		fprintf(g,'\t\t<operator id="NenullScaler.2" spec="ScaleOperator" scaleFactor="0.8" parameter="@Nenull.2" weight="3.0"/>\n');
-		fprintf(g,'\t\t<operator id="NeScalerScaler2" spec="RealRandomWalkOperator" parameter="@growth.2" windowSize="0.1" weight="3.0"/>\n');
-
-		fprintf(g,'\t\t<operator id="NenullScaler.3" spec="ScaleOperator" scaleFactor="0.8" parameter="@Nenull.3" weight="3.0"/>\n');
-		fprintf(g,'\t\t<operator id="NeScalerScaler3" spec="RealRandomWalkOperator" parameter="@growth.3" windowSize="0.1" weight="3.0"/>\n');
-
         
-        fprintf(g,'\t\t<operator id="MigrationScaler" spec="ScaleOperator" scaleFactor="0.8" optimise="true" parameter="@migration" weight="10.0"/>\n');
+        fprintf(g,'\t\t<operator id="NeCarryinglScaler.1" spec="beast.mascotskyline.operators.AdaptiveMultivariateGaussianOperator" windowSize="0.1" weight="3.0">\n');
+        fprintf(g,'\t\t\t<parameter idref="Nenull.1"/>\n');
+        fprintf(g,'\t\t\t<parameter idref="growth.1"/>\n');
+        fprintf(g,'\t\t\t<parameter idref="Nenull.2"/>\n');
+        fprintf(g,'\t\t\t<parameter idref="growth.2"/>\n');
+        fprintf(g,'\t\t\t<parameter idref="Nenull.3"/>\n');
+        fprintf(g,'\t\t\t<parameter idref="growth.3"/>\n');
+        fprintf(g,'\t\t\t<parameter idref="migration"/>\n');
+%         fprintf(g,'\t\t\t<logTransform id="logTransform" estimate="false" spec="parameter.BooleanParameter">false false false false false false false false false true</logTransform>\n');
+        fprintf(g,'\t\t</operator>\n');
 
-%         fprintf(g,'\t\t<logger id="probtreelognud" fileName="%s.nud.trees" logEvery="5000" mode="tree">\n',flog);
-%         fprintf(g,'\t\t\t<log id="logTreesnud" spec="StructuredTreeLogger" upDown="false" mascot="@coalescent"/>\n');
-%         fprintf(g,'\t\t</logger>\n');
         fprintf(g,'\t\t<logger id="probtreelog" fileName="%s.trees" logEvery="5000" mode="tree">\n',flog);
         fprintf(g,'\t\t\t<log id="logTrees" spec="StructuredTreeLogger" mascot="@coalescent"/>\n');
         fprintf(g,'\t\t</logger>\n');
@@ -180,10 +183,9 @@ for i = 1 : length(tree_files)
         fprintf(g,'\t\t<logger id="tracelog" fileName="%s.log" logEvery="200" model="@posterior" sanitiseHeaders="true" sort="smart">\n',flog);
         fprintf(g,'\t\t\t<log idref="posterior"/>\n');
         fprintf(g,'\t\t\t<log idref="prior"/>\n');
-%         fprintf(g,'\t\t\t<log idref="Precision"/>\n');
 
         fprintf(g,'\t\t\t<log spec="RootStateLogger" id="RootStateLogger" mascot="@coalescent"/>\n');
-        fprintf(g,'\t\t\t<log idref="migration"/>\n');
+        fprintf(g,'\t\t\t<log idref="piecewiseConstant"/>\n');
         fprintf(g,'\t\t\t<log idref="Nenull.1"/>\n');
         fprintf(g,'\t\t\t<log idref="Nenull.2"/>\n');
         fprintf(g,'\t\t\t<log idref="Nenull.3"/>\n');

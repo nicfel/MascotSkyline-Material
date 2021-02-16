@@ -17,24 +17,18 @@ rm(list = ls())
 this.dir <- dirname(parent.frame(2)$ofile)
 setwd(this.dir)
 
+# read in the parameters
+params = read.table("rates.txt", header=TRUE, sep="\t", nrows = 0)
+param_labels = labels(params)[[2]]
+
 # get the names of all SISCO first (of three) run log files
 log <- list.files(path="./out", pattern="*.log", full.names = TRUE)
 
-# use the matlab standard colors to plot
-col0 <- rgb(red=0.0, green=0.4470,blue=0.7410)
-col1 <- rgb(red=0.8500, green=0.3250,blue=0.0980)
-col2 <- rgb(red=0.9290, green=0.6940,blue=0.1250)
-col4 <- rgb(red=0.4660, green=0.6740,blue=0.1880)
-col3 <- rgb(red=0.3010, green=0.7450,blue=0.9330)
+states <- 3
 
-
-states <- 5
-
-m_params <- read.table("mParameters.txt", header=TRUE, sep="\t", nrows = 0)
-Ne_params <- read.table("NeParameters.txt", header=TRUE, sep="\t", nrows = 0)
-
-Nenr <- 1
-mnr <- 1
+start.Ne <- T
+start.growth <- T
+start.mig <- T
 
 # Read In Data ---------------------------------
 for (i in seq(1,length(log),1)){
@@ -50,8 +44,7 @@ for (i in seq(1,length(log),1)){
   # calculate ess values
   ess <- effectiveSize(t)
 
-    
-  if (min(ess[2:3])<100){
+    if (min(ess[2:3])<100){
     print("masco ESS value to low")
     print(sprintf("ESS value is %f for file %s",min(ess[2:6]),filename1))
   }else{
@@ -63,31 +56,62 @@ for (i in seq(1,length(log),1)){
       
       runnumber = as.numeric(tmp[[1]][2])
       
-      Ne_index = which(Ne_params$Nr==runnumber)
-      m_index = which(m_params$Nr==runnumber)
-      
-      # loop over the Ne's
-      for (i in seq(2,length(Ne_params))){
-          name = names(Ne_params)[i]
-          Ne.new <- data.frame(true=Ne_params[Ne_index,i], est=median(t[which(t[,name]!=0), name]), lower=quantile(t[which(t[,name]!=0), name],0.025), upper=quantile(t[which(t[,name]!=0), name],0.975), inc=length(which(t[,name]!=0))/length(t[,name]))
-          if (Nenr==1){
-            Ne <- Ne.new
-            Nenr=Nenr+1
-          }else{
-            Ne <- rbind(Ne, Ne.new)
+
+      param_index = which(params$run==runnumber)
+    
+      # loop over the Ne0's
+      for (i in seq(2,length(param_labels))){
+          if (startsWith(param_labels[[i]], "Ne0")){
+            name_log = gsub("Ne0", "Nenull", param_labels[[i]])
+            median_val = median(t[,name_log])
+            hpd = HPDinterval(as.mcmc(t[,name_log]))
+            new.data = data.frame(true=params[param_index,param_labels[[i]],], median=median_val,lower=hpd[1,"lower"],upper=hpd[1,"upper"])
+            if (start.Ne){
+              Ne = new.data
+              start.Ne = F
+            }else{
+              Ne = rbind(Ne, new.data)
+            }
           }
       }
-      # loop over the Ne's
-      for (i in seq(2,length(m_params))){
-        name = names(m_params)[i]
-        m.new <- data.frame(true=m_params[m_index,i], est=median(t[which(t[,name]!=0), name]), lower=quantile(t[which(t[,name]!=0), name],0.025), upper=quantile(t[which(t[,name]!=0), name],0.975), inc=length(which(t[,name]!=0))/length(t[,name]))
-        if (mnr==1){
-          m <- m.new
-          mnr=mnr+1
-        }else{
-          m <- rbind(m, m.new)
+      
+      # loop over the growth's
+      for (i in seq(2,length(param_labels))){
+        if (startsWith(param_labels[[i]], "growth")){
+          name_log = gsub("Ne0", "Nenull", param_labels[[i]])
+          median_val = median(t[,name_log])
+          hpd = HPDinterval(as.mcmc(t[,name_log]))
+          new.data = data.frame(true=-params[param_index,param_labels[[i]],], median=median_val,lower=hpd[1,"lower"],upper=hpd[1,"upper"])
+          if (start.growth){
+            growth = new.data
+            start.growth = F
+          }else{
+            growth = rbind(growth, new.data)
+          }
         }
       }
+      
+      # loop over the migrations
+      c = 6
+      for (a in seq(1,states)){
+        for (b in seq(1,states)){
+          if (a!=b){
+            mig_label = paste("f_migration.state",a-1,"_to_state",b-1,sep="")
+            migration = paste("f_migration.state",a-1,"_to_state",b-1,sep="")
+            median_val = median(t[,migration])
+            hpd = HPDinterval(as.mcmc(t[,migration]))
+            new.data = data.frame(true=params[param_index,mig_label], median=median_val,lower=hpd[1,"lower"],upper=hpd[1,"upper"])
+            if (start.mig){
+              mig = new.data
+              start.mig = F
+            }else{
+              mig = rbind(mig, new.data)
+            }
+            c = c-1
+          }
+        }
+      }
+  
   }
 }
 
@@ -98,95 +122,30 @@ for (i in seq(1,length(log),1)){
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-
-m_red1 = m[which(m$true!=0),]
-m_red2 = m[which(m$true==0),]
-
-p_mig <- ggplot()+
-  geom_point(data=m_red1, aes(x=true, y=est))+
-  geom_segment(data=m_red1, aes(x = -3.5, y = -3.5, xend = 3.5, yend = 3.5), color="red") +
-  ylab("estimated") + xlab("true") + ggtitle("coefficients") + 
+p_ne <- ggplot() +
+  geom_point(data=Ne, aes(x=true, y=median))+
+  geom_segment(data=Ne, aes(x = -2, y = -2, xend = 2, yend = 2), color="red") +
+  geom_errorbar(data=Ne, aes(x=true, ymin=lower, ymax=upper), alpha=0.5)+
+  ylab("estimated") + xlab("true") + ggtitle("present Ne") + theme_minimal()+
   theme(legend.position="none")
-plot(p_mig)
+plot(p_ne)
 
-
-
-p_mig_inc1 <- ggplot()+
-  geom_point(data=m_red1, aes(x=abs(true), y=inc), size=1)+
-  ylab("inclusion probability") + xlab("absolute value of true scaler") + ggtitle("Inclusion of active covariates") + 
-  geom_hline(yintercept = 0.6383, color="black", linetype="dashed") + 
+p_growth <- ggplot() +
+  geom_point(data=growth, aes(x=true, y=median))+
+  geom_segment(data=growth, aes(x = -0.2, y = -0.2, xend = 1.5, yend = 1.5), color="red") +
+  geom_errorbar(data=growth, aes(x=true, ymin=lower, ymax=upper), alpha=0.5)+
+  ylab("estimated") + xlab("true") + ggtitle("growth rate") + theme_minimal()+
   theme(legend.position="none")
-plot(p_mig_inc1)
+plot(p_growth)
 
-p_mig_inc2 <- ggplot()+
-  geom_violin(data=m_red2, aes(x=true, y=inc))+
-  ylab("inclusion probability") + xlab("true") + ggtitle("Exclusion of inactive covariates") + 
+p_growth <- ggplot() +
+  geom_point(data=mig, aes(x=true, y=median))+
+  geom_segment(data=Ne, aes(x = -2, y = -2, xend = 2, yend = 2), color="red") +
+  # geom_errorbar(data=mig, aes(x=true, ymin=lower, ymax=upper), alpha=0.5)+
+  ylab("estimated") + xlab("true") + ggtitle("migration rates") + theme_minimal()+
   theme(legend.position="none")
-plot(p_mig_inc2)
-
-
-#geom_point(data=m, aes(x=true,y=est), size=0.001, alpha=0.1) +
-
-Ne_red1 = Ne[which(Ne$true!=0),]
-Ne_red2 = Ne[which(Ne$true==0),]
-
-
-p_Ne <- ggplot()+
-  geom_point(data=Ne_red1, aes(x=true, y=est))+
-  geom_segment(data=Ne_red1, aes(x = -3.5, y = -3.5, xend = 3.5, yend = 3.5), color="red") +
-  ylab("estimated") + xlab("true") + ggtitle("coefficients") + 
-  theme(legend.position="none")
-plot(p_Ne)
-
-
-p_Ne_inc1 <- ggplot()+
-  geom_point(data=Ne_red1, aes(x=abs(true), y=inc), size=1)+
-  ylab("inclusion probability") + xlab("absolute value of true scaler") + ggtitle("Inclusion of active covariates") + 
-  geom_hline(yintercept = 0.6383, color="black", linetype="dashed") + 
-  theme(legend.position="none") 
-plot(p_Ne_inc1)
-
-p_Ne_inc2 <- ggplot()+
-  geom_violin(data=Ne_red2, aes(x=true, y=inc))+
-  ylab("inclusion probability") + xlab("true") + ggtitle("Exclusion of inactive covariates") + 
-  theme(legend.position="none")
-plot(p_Ne_inc2)
-
-
-# ggsave(plot=p_mig,"../../Figures/Stepwise/Stepwise_migration.pdf",width=3.5, height=3.5)
-# 
-# ggsave(plot=p_mig_inc1,"../../Figures/Stepwise/Stepwise_mig_inclusion.pdf",width=3.5, height=3.5)
-# ggsave(plot=p_mig_inc2,"../../Figures/Stepwise/Stepwise_mig_exclusion.pdf",width=3.5, height=3.5)
-# 
-# 
-# ggsave(plot=p_Ne,"../../Figures/Stepwise/Stepwise_ne.pdf",width=3.5, height=3.5)
-# 
-# ggsave(plot=p_Ne_inc1,"../../Figures/Stepwise/Stepwise_Ne_inclusion.pdf",width=3.5, height=3.5)
-# ggsave(plot=p_Ne_inc2,"../../Figures/Stepwise/Stepwise_Ne_exclusion.pdf",width=3.5, height=3.5)
-
-
-# print(sprintf("coverage migration = %f ", mean(cov.m$isIn)))
-# print(sprintf("coverage Ne = %f ",mean(cov.Ne$isIn)))
+plot(p_growth)
 
 
 
-p_error <- ggplot()+
-  geom_point(data=m_red1, aes(x=true, y=est),size=0.1)+
-  geom_errorbar(data=m_red1, aes(x=true, ymin=lower, ymax=upper), alpha=0.5)+
-  geom_segment(data=m_red1, aes(x = -3.5, y = -3.5, xend = 3.5, yend = 3.5), color="red") +
-  ylab("estimated") + xlab("true")+ 
-  ggtitle("migration rates") + 
-  theme(legend.position="none")
-plot(p_error)
-ggsave(plot=p_error,"../../Figures/Stepwise/Stepwise_migration_error.pdf",width=3.5, height=3.5)
 
-
-p_Ne_error <- ggplot()+
-  geom_point(data=Ne_red1, aes(x=true, y=est),size=0.1)+
-  geom_errorbar(data=Ne_red1, aes(x=true, ymin=lower, ymax=upper), alpha=0.5)+
-  geom_segment(data=Ne_red1, aes(x = -3.5, y = -3.5, xend = 3.5, yend = 3.5), color="red") +
-  ylab("estimated") + xlab("true")+ 
-  ggtitle("effective population size") + 
-  theme(legend.position="none")
-plot(p_Ne_error)
-ggsave(plot=p_Ne_error,"../../Figures/Stepwise/Stepwise_Ne_error.pdf",width=3.5, height=3.5)

@@ -1,2 +1,11 @@
 .DS_Store
 /Software/
+*log
+*out
+*.xml
+!/Application/ZIKA/xmls/zika_skygrid_rep0.xml
+!/Application/EBOV/xmls/ebov_skygrid_rep0.xml
+*.trees
+*.tree
+*.state
+
