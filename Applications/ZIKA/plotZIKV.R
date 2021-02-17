@@ -24,6 +24,9 @@ setwd(this.dir)
 log <- list.files(path="./out", pattern="*.log", full.names = TRUE)
 
 locations = c("Polynesia", "SouthAmerica", "CentralAmerica", "Caribbean", "Brazil_North", "Brazil_Northeast", "Brazil_Southeast")
+# cols = brewer.pal(n = 7, name = 'Dark2')
+
+cols = c("Polynesia"="#1B9E77", "SouthAmerica"="#D95F02", "CentralAmerica"="#7570B3", "Caribbean"="#E7298A", "Brazil North"="#66A61E", "Brazil Northeast"="#E6AB02", "Brazil Southeast"="#A6761D")
 
 
 # Read in the logs
@@ -69,66 +72,65 @@ for (i in seq(1,length(t.skygrid))){
   }
 }
 
-for (i in seq(1,length(t.constant))){
-  if (grepl("Ne.", labels(t.constant)[[2]][[i]])){
-    loc = strsplit(gsub("Ne.", "", labels(t.constant)[[2]][[i]]), split="\\.")[[1]]
-    hpd.5 = HPDinterval(as.mcmc(t.constant[, i]), prob=0.5)
-    hpd.95 = HPDinterval(as.mcmc(t.constant[, i]), prob=0.95)
-    timestart = as.Date("2016-10-12")
-    timeend= as.Date("2016-10-12")-0.025*(158)*365
-    
-    
-    dat = rbind(dat, data.frame(time = timestart, 
-                                l.5=hpd.5[1,"lower"], u.5=hpd.5[1,"upper"],
-                                l.95=hpd.95[1,"lower"], u.95=hpd.95[1,"upper"],
-                                location=gsub("_", " ", loc[[1]]),
-                                method="constant"))
-    dat = rbind(dat, data.frame(time = timeend, 
-                                l.5=hpd.5[1,"lower"], u.5=hpd.5[1,"upper"],
-                                l.95=hpd.95[1,"lower"], u.95=hpd.95[1,"upper"],
-                                location=gsub("_", " ", loc[[1]]),
-                                method="constant"))
-    
-  }
-}
+# for (i in seq(1,length(t.constant))){
+#   if (grepl("Ne.", labels(t.constant)[[2]][[i]])){
+#     loc = strsplit(gsub("Ne.", "", labels(t.constant)[[2]][[i]]), split="\\.")[[1]]
+#     hpd.5 = HPDinterval(as.mcmc(t.constant[, i]), prob=0.5)
+#     hpd.95 = HPDinterval(as.mcmc(t.constant[, i]), prob=0.95)
+#     timestart = as.Date("2016-10-12")
+#     timeend= as.Date("2016-10-12")-0.025*(158)*365
+#     
+#     
+#     dat = rbind(dat, data.frame(time = timestart, 
+#                                 l.5=hpd.5[1,"lower"], u.5=hpd.5[1,"upper"],
+#                                 l.95=hpd.95[1,"lower"], u.95=hpd.95[1,"upper"],
+#                                 location=gsub("_", " ", loc[[1]]),
+#                                 method="constant"))
+#     dat = rbind(dat, data.frame(time = timeend, 
+#                                 l.5=hpd.5[1,"lower"], u.5=hpd.5[1,"upper"],
+#                                 l.95=hpd.95[1,"lower"], u.95=hpd.95[1,"upper"],
+#                                 location=gsub("_", " ", loc[[1]]),
+#                                 method="constant"))
+#     
+#   }
+# }
 
 
 p_ne1 <- ggplot(dat[which(dat$location=="Polynesia" | dat$location=="SouthAmerica" | dat$location=="CentralAmerica"),]) +
-  # geom_ribbon(aes(x=time, ymin=l.95,ymax=u.95, fill=location), alpha=0.25) +
-  geom_ribbon(aes(x=time, ymin=l.5,ymax=u.5, fill=location), alpha=0.5) +
+  geom_ribbon(aes(x=time, ymin=l.95,ymax=u.95, fill=location), alpha=0.25) +
+  geom_ribbon(aes(x=time, ymin=l.5,ymax=u.5, fill=location), alpha=0.9) +
   theme_minimal()+
-  scale_color_OkabeIto(breaks=c("state0","state1"))+
-  scale_fill_OkabeIto()+
+  scale_fill_manual(name="",values=cols)+
   scale_x_date()+
-  # scale_y_log10()+
-  facet_wrap(.~method, ncol=3)+
+  # facet_wrap(.~method, ncol=3)+
   xlab("")+
-  theme(legend.position = "none")
+  coord_cartesian(ylim=c(0,75))+
+  theme(legend.position = c(.3, .8))
 plot(p_ne1)
 
 p_ne2 <- ggplot(dat[which(dat$location=="Brazil North" | dat$location=="Brazil Northeast"),]) +
-  # geom_ribbon(aes(x=time, ymin=l.95,ymax=u.95, fill=location), alpha=0.25) +
-  geom_ribbon(aes(x=time, ymin=l.5,ymax=u.5, fill=location), alpha=0.5) +
+  geom_ribbon(aes(x=time, ymin=l.95,ymax=u.95, fill=location), alpha=0.25) +
+  geom_ribbon(aes(x=time, ymin=l.5,ymax=u.5, fill=location), alpha=0.9) +
   theme_minimal()+
-  scale_color_OkabeIto(breaks=c("state0","state1"))+
-  scale_fill_OkabeIto()+
+  scale_fill_manual(name="",values=cols)+
   scale_x_date()+
-  facet_wrap(.~method, ncol=3)+
+  # facet_wrap(.~method, ncol=3)+
   xlab("")+
-  theme(legend.position = "none")
+  coord_cartesian(ylim=c(0,75))+
+  theme(legend.position = c(.3, .8))
 plot(p_ne2)
 
-p_ne2 <- ggplot(dat[which(dat$location=="Caribbean" | dat$location=="Brazil Southeast"),]) +
+p_ne3 <- ggplot(dat[which(dat$location=="Caribbean" | dat$location=="Brazil Southeast"),]) +
   geom_ribbon(aes(x=time, ymin=l.95,ymax=u.95, fill=location), alpha=0.25) +
-  geom_ribbon(aes(x=time, ymin=l.5,ymax=u.5, fill=location), alpha=0.5) +
+  geom_ribbon(aes(x=time, ymin=l.5,ymax=u.5, fill=location), alpha=0.9) +
   theme_minimal()+
-  scale_color_OkabeIto(breaks=c("state0","state1"))+
-  scale_fill_OkabeIto()+
+  scale_fill_manual(name="",values=cols)+
   scale_x_date()+
-  facet_wrap(.~method, ncol=3)+
+  # facet_wrap(.~method, ncol=3)+
   xlab("")+
-  theme(legend.position = "none")
-plot(p_ne2)
+  coord_cartesian(ylim=c(0,75))+
+  theme(legend.position = c(.3, .8))
+plot(p_ne3)
 
 # ggsave(plot=p_ne, filename = "../../../MascotSkyline-Text/Figures/zikv_ne.pdf", height=15, width=15)
 
@@ -157,11 +159,11 @@ for (i in seq(1,length(tree@data$Brazil_North))){
   tree@data$entropy[[i]] = -entr
 }
 
-p = ggtree(tree, aes(color=location, alpha=entropy)) + geom_tree() + theme_tree() +
-  scale_color_OkabeIto() + theme(legend.position = "left") + coord_flip() + scale_x_reverse()
+p_skygrid = ggtree(tree, aes(color=location, alpha=entropy)) + geom_tree() + theme_tree() +
+  scale_color_manual(values=cols)+
+  theme(legend.position = "none") + coord_flip() + scale_x_reverse()
 
-plot(p)
-ggsave(plot=p, filename = "../../../MascotSkyline-Text/Figures/zikv_skygrid_tree.pdf", height=6, width=6)
+plot(p_skygrid)
 
 
 tree = read.beast("./out/zikv_constant.tree")
@@ -180,9 +182,21 @@ for (i in seq(1,length(tree@data$Brazil_North))){
   tree@data$entropy[[i]] = -entr
 }
 
-p = ggtree(tree, aes(color=location, alpha=entropy)) + geom_tree() + theme_tree() +
-  scale_color_OkabeIto() + theme(legend.position = "left") + coord_flip() + scale_x_reverse()
+p_constant = ggtree(tree, aes(color=location, alpha=entropy)) + geom_tree() + theme_tree() +
+  scale_color_manual(values=cols)+
+  theme(legend.position = "none") + coord_flip() + scale_x_reverse()
 
-plot(p)
-ggsave(plot=p, filename = "../../../MascotSkyline-Text/Figures/zikv_constant_tree.pdf", height=6, width=6)
+plot(p_constant)
 
+
+library("gridExtra")
+
+p1 = ggarrange(p_ne1, p_ne2, p_ne3, ncol = 3, labels = c("A", "B", "C"))
+p2 = ggarrange(p_skygrid, p_constant, ncol = 2, labels = c("D", "E"))
+
+p3 = ggarrange(p1, p2, ncol = 1)
+
+plot(p3)
+
+
+ggsave(plot=p3, filename = "../../../MascotSkyline-Text/Figures/zikv.pdf", height=6, width=10)

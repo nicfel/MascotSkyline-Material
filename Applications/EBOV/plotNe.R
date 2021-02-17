@@ -21,36 +21,22 @@ this.dir <- dirname(parent.frame(2)$ofile)
 setwd(this.dir)
 
 # get the names of all SISCO first (of three) run log files
-log <- list.files(path="./out", pattern="*.log", full.names = TRUE)
+log <- list.files(path="./out", pattern="*rep0.log", full.names = TRUE)
 
 locations = c("SLE", "GIN", "LBR")
 
-# Read in the logs
-t1 <- read.table(log[[1]], header=TRUE, sep="\t")
-t1 <- t1[-seq(1,ceiling(length(t1$Sample)/10)), ]
-t2 <- read.table(log[[2]], header=TRUE, sep="\t")
-t2 <- t2[-seq(1,ceiling(length(t2$Sample)/10)), ]
-t3 <- read.table(log[[3]], header=TRUE, sep="\t")
-t3 <- t3[-seq(1,ceiling(length(t3$Sample)/10)), ]
-
-t.structured = rbind(t1,t2,t3)
-
-t1 <- read.table(log[[4]], header=TRUE, sep="\t")
-t1 <- t1[-seq(1,ceiling(length(t1$Sample)/10)), ]
-t2 <- read.table(log[[5]], header=TRUE, sep="\t")
-t2 <- t2[-seq(1,ceiling(length(t2$Sample)/10)), ]
-t3 <- read.table(log[[6]], header=TRUE, sep="\t")
-t3 <- t3[-seq(1,ceiling(length(t3$Sample)/10)), ]
-
-t.unstructured = rbind(t1,t2,t3)
-
 dat = data.frame()
-for (i in seq (1,2)){
-  if (i==1){
-    t = t.unstructured
-  }else{
-    t = t.structured
-  }
+for (j in seq (1,length(log))){
+  t1 <- read.table(log[[j]], header=TRUE, sep="\t")
+  t1 <- t1[-seq(1,ceiling(length(t1$Sample)/10)), ]
+  t2 <- read.table(gsub("rep0","rep1",log[[j]]), header=TRUE, sep="\t")
+  t2 <- t2[-seq(1,ceiling(length(t2$Sample)/10)), ]
+  t3 <- read.table(gsub("rep0","rep2",log[[j]]), header=TRUE, sep="\t")
+  t3 <- t3[-seq(1,ceiling(length(t3$Sample)/10)), ]
+  t = rbind(t1,t2,t3)
+
+  sampling =strsplit(log[j], split="_")[[1]][[2]]
+  struct = strsplit(log[j], split="_")[[1]][[3]]
   for (i in seq(1,length(t))){
     if (grepl("Ne_", labels(t)[[2]][[i]])){
       loc = strsplit(gsub("logNe_", "", labels(t)[[2]][[i]]), split="\\.")[[1]]
@@ -61,23 +47,25 @@ for (i in seq (1,2)){
       dat = rbind(dat, data.frame(time = timestart, 
                                   l.5=hpd.5[1,"lower"], u.5=hpd.5[1,"upper"],
                                   l.95=hpd.95[1,"lower"], u.95=hpd.95[1,"upper"],
-                                  location=gsub("_", " ", loc[[1]])))
+                                  location=gsub("_", " ", loc[[1]]),
+                                  sampling=sampling, structure=struct))
       dat = rbind(dat, data.frame(time = timeend, 
                                   l.5=hpd.5[1,"lower"], u.5=hpd.5[1,"upper"],
                                   l.95=hpd.95[1,"lower"], u.95=hpd.95[1,"upper"],
-                                  location=gsub("_", " ", loc[[1]])))
+                                  location=gsub("_", " ", loc[[1]]),
+                                  sampling=sampling, structure=struct))
       
     }
   }
 }
 
-p_ne1 <- ggplot(dat[which(dat$location=="SLE" | dat$location=="GIN" | dat$location=="LBR" | dat$location=="WA"),]) +
+p_ne1 <- ggplot(dat[which(dat$location=="SLE" | dat$location=="GIN" | dat$location=="LBR"),]) +
   geom_ribbon(aes(x=time, ymin=l.95,ymax=u.95, fill=location), alpha=0.25) +
   geom_ribbon(aes(x=time, ymin=l.5,ymax=u.5, fill=location), alpha=0.75) +
   theme_minimal()+
   scale_color_OkabeIto(breaks=c("state0","state1"))+
   scale_fill_OkabeIto()+
-  scale_x_date()+
+  scale_x_date(limits=c(as.Date("2014-01-01"), as.Date("2015-07-01")))+
   # facet_wrap(.~location, ncol=3)+
   xlab("")
 plot(p_ne1)
