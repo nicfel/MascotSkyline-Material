@@ -8,6 +8,7 @@ library(ggplot2)
 # needed to calculate ESS values
 library(coda)
 library("methods")
+library(ggpubr)
 
 
 # clear workspace
@@ -22,13 +23,11 @@ params = read.table("rates.txt", header=TRUE, sep="\t", nrows = 0)
 param_labels = labels(params)[[2]]
 
 # get the names of all SISCO first (of three) run log files
-log <- list.files(path="./out", pattern="*.log", full.names = TRUE)
+log <- list.files(path="../out", pattern="Expo.*.log", full.names = TRUE)
 
 states <- 3
 
-start.Ne <- T
-start.growth <- T
-start.mig <- T
+data = data.frame()
 
 # Read In Data ---------------------------------
 for (i in seq(1,length(log),1)){
@@ -42,76 +41,34 @@ for (i in seq(1,length(log),1)){
   t <- t[-seq(1,ceiling(length(t$m1)/10)), ]
 
   # calculate ess values
-  ess <- effectiveSize(t)
-
-    if (min(ess[2:3])<100){
-    print("masco ESS value to low")
-    print(sprintf("ESS value is %f for file %s",min(ess[2:6]),filename1))
-  }else{
-      dfname <- data.frame(filename = filename1)
-      
-      # get the number of the run
-      tmp = strsplit(filename1, split="_")
-      tmp = strsplit(tmp[[1]][2], split="S")
-      
-      runnumber = as.numeric(tmp[[1]][2])
-      
-
-      param_index = which(params$run==runnumber)
-    
-      # loop over the Ne0's
-      for (i in seq(2,length(param_labels))){
-          if (startsWith(param_labels[[i]], "Ne0")){
-            name_log = gsub("Ne0", "Nenull", param_labels[[i]])
-            median_val = median(t[,name_log])
-            hpd = HPDinterval(as.mcmc(t[,name_log]))
-            new.data = data.frame(true=params[param_index,param_labels[[i]],], median=median_val,lower=hpd[1,"lower"],upper=hpd[1,"upper"])
-            if (start.Ne){
-              Ne = new.data
-              start.Ne = F
-            }else{
-              Ne = rbind(Ne, new.data)
-            }
-          }
-      }
-      
-      # loop over the growth's
-      for (i in seq(2,length(param_labels))){
-        if (startsWith(param_labels[[i]], "growth")){
-          name_log = gsub("Ne0", "Nenull", param_labels[[i]])
-          median_val = median(t[,name_log])
-          hpd = HPDinterval(as.mcmc(t[,name_log]))
-          new.data = data.frame(true=-params[param_index,param_labels[[i]],], median=median_val,lower=hpd[1,"lower"],upper=hpd[1,"upper"])
-          if (start.growth){
-            growth = new.data
-            start.growth = F
-          }else{
-            growth = rbind(growth, new.data)
-          }
-        }
-      }
-      
-      # loop over the migrations
-      c = 6
-      for (a in seq(1,states)){
-        for (b in seq(1,states)){
-          if (a!=b){
-            mig_label = paste("f_migration.state",a-1,"_to_state",b-1,sep="")
-            migration = paste("f_migration.state",a-1,"_to_state",b-1,sep="")
-            median_val = median(t[,migration])
-            hpd = HPDinterval(as.mcmc(t[,migration]))
-            new.data = data.frame(true=params[param_index,mig_label], median=median_val,lower=hpd[1,"lower"],upper=hpd[1,"upper"])
-            if (start.mig){
-              mig = new.data
-              start.mig = F
-            }else{
-              mig = rbind(mig, new.data)
-            }
-            c = c-1
-          }
-        }
-      }
+  if (length(t$Sample>100)){
+    ess <- effectiveSize(t)
   
+    if (min(ess[2:3])<100){
+      print("masco ESS value to low")
+      print(sprintf("ESS value is %f for file %s",min(ess[2:6]),filename1))
+    }else{
+        dfname <- data.frame(filename = filename1)
+        
+        # get the number of the run
+        tmp = strsplit(filename1, split="_")
+        tmp = strsplit(tmp[[1]][2], split="S")
+        
+        runnumber = as.numeric(tmp[[1]][2])
+        param_index = which(params$run==runnumber)
+
+        # loop over the Ne0's
+        for (j in seq(2,length(param_labels))){
+          mean = mean(t[,param_labels[j]])
+          median = mean(t[,param_labels[j]])
+          hpd = HPDinterval(as.mcmc(t[,param_labels[j]]))
+          value_name = strsplit(param_labels[j], split="\\.")[[1]][[1]]
+          true=params[param_index, param_labels[j]]
+
+          data = rbind(data, data.frame(name = value_name, true=true, mean=mean, median=median, 
+                                        lower=hpd[1,"lower"], upper=hpd[1,"upper"], run=runnumber))
+        }
+      }
   }
 }
 
@@ -121,31 +78,58 @@ for (i in seq(1,length(log),1)){
 # plot the rate ratios
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+tot.ne = data[data$name=="NeNull","lower"]<data[data$name=="NeNull","true"] &
+  data[data$name=="NeNull","upper"]>data[data$name=="NeNull","true"]
+cov.ne = sum(tot.ne[!is.na(tot.ne)])/sum(!is.na(tot.ne))
 
-p_ne <- ggplot() +
-  geom_point(data=Ne, aes(x=true, y=median))+
-  geom_segment(data=Ne, aes(x = -2, y = -2, xend = 2, yend = 2), color="red") +
-  geom_errorbar(data=Ne, aes(x=true, ymin=lower, ymax=upper), alpha=0.5)+
-  ylab("estimated") + xlab("true") + ggtitle("present Ne") + theme_minimal()+
+tot.growth = data[data$name=="GrowthRate","lower"]<(-1)*data[data$name=="GrowthRate","true"] &
+  data[data$name=="GrowthRate","upper"]>(-1)*data[data$name=="GrowthRate","true"]
+cov.growth = sum(tot.growth[!is.na(tot.growth)])/sum(!is.na(tot.growth))
+
+
+tot.mig = data[data$name=="f_migrationRatesSkyline","lower"]<exp(data[data$name=="f_migrationRatesSkyline","true"]) &
+  data[data$name=="f_migrationRatesSkyline","upper"]>exp(data[data$name=="f_migrationRatesSkyline","true"])
+cov.mig = sum(tot.mig[!is.na(tot.mig)])/sum(!is.na(tot.mig))
+
+
+p_ne <- ggplot(data[data$name=="NeNull",]) +
+  geom_point(aes(x=true, y=median))+
+  geom_abline(color="red") +
+  geom_errorbar(aes(x=true, ymin=lower, ymax=upper), alpha=0.5)+
+  ylab("estimated") + xlab("true")+
+  ggtitle(paste("log(present Ne) (cov =", round(cov.ne, 2), ")")) +
+  
+  theme_minimal()+
   theme(legend.position="none")
 plot(p_ne)
 
-p_growth <- ggplot() +
-  geom_point(data=growth, aes(x=true, y=median))+
-  geom_segment(data=growth, aes(x = -0.2, y = -0.2, xend = 1.5, yend = 1.5), color="red") +
-  geom_errorbar(data=growth, aes(x=true, ymin=lower, ymax=upper), alpha=0.5)+
-  ylab("estimated") + xlab("true") + ggtitle("growth rate") + theme_minimal()+
+p_growth <- ggplot(data[data$name=="GrowthRate",]) +
+  geom_point(aes(x=true, y=-median))+
+  geom_abline(color="red") +
+  geom_errorbar(aes(x=true, ymin=-lower, ymax=-upper), alpha=0.5)+
+  ylab("estimated") + xlab("true") + theme_minimal()+
+  ggtitle(paste("Growth rate (cov =", round(cov.growth, 2), ")")) +
   theme(legend.position="none")
 plot(p_growth)
 
-p_growth <- ggplot() +
-  geom_point(data=mig, aes(x=true, y=median))+
-  geom_segment(data=Ne, aes(x = -2, y = -2, xend = 2, yend = 2), color="red") +
-  # geom_errorbar(data=mig, aes(x=true, ymin=lower, ymax=upper), alpha=0.5)+
-  ylab("estimated") + xlab("true") + ggtitle("migration rates") + theme_minimal()+
+p_migration <- ggplot(data[data$name=="f_migrationRatesSkyline",]) +
+  geom_point(aes(x=exp(true), y=median))+
+  geom_errorbar(aes(x=exp(true), ymin=lower, ymax=upper), alpha=0.5)+
+  scale_x_log10()+
+  scale_y_log10()+
+  geom_abline(color="red") +
+  ylab("estimated") + xlab("true") + 
+  ggtitle(paste("Migration Rates (cov =", round(cov.mig, 2), ")")) +
+  theme_minimal()+
   theme(legend.position="none")
-plot(p_growth)
+plot(p_migration)
 
 
+p1 = ggarrange(p_ne, p_growth, p_migration, ncol = 3, labels = c("A", "B", "C"))
+ggsave(plot=p1, filename = "../../../MascotSkyline-Text/Figures/exponential.pdf", height=4, width=10)
 
+# check for outliers
+tmp = data[data$name=="GrowthRate",]
+tmp$diff = abs(tmp$median+tmp$true)
+print(tmp[tmp$diff>0.5, "run"])
 

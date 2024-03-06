@@ -37,15 +37,15 @@ S = 1;
 g = fopen('rates.txt','w');
 fprintf(g, 'run');
 for i = 1 : states
-    fprintf(g, '\tNe0.%d', i);
+    fprintf(g, '\tNeNull.state%d', i-1);
 end
 for i = 1 : states
-    fprintf(g, '\tgrowth.%d', i);
+    fprintf(g, '\tGrowthRate.state%d', i-1);
 end
 for a = 1 : states
     for b = 1 : states
         if a~=b
-            fprintf(g, '\tf_migration.state%d_to_state%d', a-1, b-1);
+            fprintf(g, '\tf_migrationRatesSkyline.state%d_to_state%d', a-1, b-1);
         end
     end
 end
@@ -171,7 +171,7 @@ while S <= 100
                     fprintf(p, '\t\t\t\t\t2L[%d]:1 -> L[%d]:1\n',i-1,i-1);
                     fprintf(p, '\t\t\t\t</reaction>\n');
                 end
-            elseif  ~isempty(strfind(temp_lines{l},'insert_migration'))
+            elseif ~isempty(strfind(temp_lines{l},'insert_migration'))
                 counter = 1;
                 for a = 1 : states
                     for b = 1 : states
@@ -194,7 +194,6 @@ while S <= 100
                 fprintf(p,'\t\t\t<lineageSeedMultiple spec="MultipleIndividuals" copies="1" time="0">\n');
                 fprintf(p,'\t\t\t\t<population spec="Population" type="@L" location="0"/>\n');
                 fprintf(p,'\t\t\t</lineageSeedMultiple>\n');
-
                 for i = 1 : states
                     rest_samples = sample_nr(i);
                     next_samples = 1;

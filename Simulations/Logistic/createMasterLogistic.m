@@ -31,18 +31,18 @@ S = 1;
 g = fopen('rates.txt','w');
 fprintf(g, 'run');
 for i = 1 : states
-    fprintf(g, '\tcarrying.%d', i);
+    fprintf(g, '\tCapacity.state%d', i-1);
 end
 for i = 1 : states
-    fprintf(g, '\tlogit.%d', i);
+    fprintf(g, '\tCarryingProportion.state%d', i-1);
 end
 for i = 1 : states
-    fprintf(g, '\tgrowth.%d', i);
+    fprintf(g, '\tGrowthRate.state%d', i-1);
 end
 for a = 1 : states
     for b = 1 : states
         if a~=b
-            fprintf(g, '\tf_migration.state%d_to_state%d', a-1, b-1);
+            fprintf(g, '\tf_migrationRatesSkyline.state%d_to_state%d', a-1, b-1);
         end
     end
 end
@@ -54,10 +54,9 @@ while S <= 100
     filename = sprintf('Logistic_S%d_master',S);
         
     Ne = zeros(states,length(time_intervals));
-    growth = normrnd(-0.5,0.5,1,states);    
+    growth = normrnd(-0.5,0.25,1,states);    
     carrying = normrnd(0,1,1,states);
-    logitstart = normrnd(1,1,1,states);  
-    percentage_carry = exp(logitstart)./(1+exp(logitstart));
+    percentage_carry = rand(1,states)*0.75+0.25;
    
 %    capacity.getValue()/(1 + (1-cP.getValue())/cP.getValue() * Math.exp(-t*growthRate.getArrayValue()))
     for a = 1 : states
@@ -69,7 +68,7 @@ while S <= 100
     % sample the Ne and the migration scalers
     m_tot_scaler = 0.5;
     
-    migration_rates = normrnd(-1,1, states,states);
+    migration_rates = exprnd(0.5, states,states);
     
 
     
@@ -99,7 +98,7 @@ while S <= 100
             fprintf(g, '\t%f', carrying(i));
         end
         for i = 1 : states
-            fprintf(g, '\t%f', logitstart(i));
+            fprintf(g, '\t%f', percentage_carry(i));
         end
 
         for i = 1 : states
@@ -210,3 +209,12 @@ while S <= 100
     
 end
 fclose('all')
+
+% fclose('all');
+% cd('master');
+% files = dir('*.xml');
+% for i = 1 : length(files)
+%     system(sprintf('/Applications/BEAST\\ 2.6.4/bin/beast %s', files(i).name))
+% end
+% cd('..');
+

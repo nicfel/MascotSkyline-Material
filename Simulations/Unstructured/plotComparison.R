@@ -62,7 +62,7 @@ for (i in seq(1,length(log),1)){
       }
     }
   }
-  system(paste("/Applications/BEAST\\ 2.6.0/bin/treeannotator -burnin 10", gsub(".log", ".trees", log[i]), "./out/summary.tree" ))
+  system(paste("/Applications/BEAST\\ 2.6.4/bin/treeannotator -burnin 10", gsub(".log", ".trees", log[i]), "./out/summary.tree" ))
   x <- read.beast("./out/summary.tree")
   p[[i]] = ggtree(x, right=TRUE, aes(color=max)) +
     scale_color_OkabeIto() +

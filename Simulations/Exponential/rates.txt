@@ -1,4 +1,4 @@
-run	Ne0.1	Ne0.2	Ne0.3	growth.1	growth.2	growth.3	f_migration.state0_to_state1	f_migration.state0_to_state2	f_migration.state1_to_state0	f_migration.state1_to_state2	f_migration.state2_to_state0	f_migration.state2_to_state1
+run	NeNull.state0	NeNull.state1	NeNull.state2	GrowthRate.state0	GrowthRate.state1	GrowthRate.state2	f_migrationRatesSkyline.state0_to_state1	f_migrationRatesSkyline.state0_to_state2	f_migrationRatesSkyline.state1_to_state0	f_migrationRatesSkyline.state1_to_state2	f_migrationRatesSkyline.state2_to_state0	f_migrationRatesSkyline.state2_to_state1
 1	1.118311	-0.005041	-0.255187	-0.338547	-0.866282	-0.403693	-1.734282	-2.249571	-0.413483	-0.939620	-1.744911	1.005591
 2	-0.532949	-0.650901	1.289957	-0.441723	-0.350868	-0.365949	-1.749647	-1.441486	0.337444	0.233104	-2.202104	-1.116026
 3	-0.500118	1.777051	-0.599427	-0.265804	-0.912071	-0.338232	-1.719300	-1.346502	-1.880160	0.453091	-0.053906	-1.629256
