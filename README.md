@@ -1,18 +1,18 @@
 This repository contains the code and data to reproduce the results of the Mascot-Skyline manuscript.
 The code for MASCOT-Skyline is part of the MASCOT package available through the BEAST2 package manager. The source code for MASCOT
-can be found at github.com/nicfel/MASCOT and a tutorial can be found at github.com/nicfel/MASCOT-tutorial.
+can be found at [github.com/nicfel/MASCOT](https://github.com/nicfel/MASCOT) and a tutorial can be found at [github.com/nicfel/MASCOT-tutorial](https://github.com/nicfel/MASCOT-tutorial).
 
 # MASCOT-Skyline integrates population and migration dynamics to enhance phylogeographic reconstructions
 
-Nicola F. Müller^a,b,1, Remco R. Bouckaert^c, Chieh-Hsi Wu^d, Trevor Bedford^b,e
+Nicola F. Müller<sup>a,b,1</sup>, Remco R. Bouckaert<sup>c</sup>, Chieh-Hsi Wu<sup>d</sup>, Trevor Bedford<sup>b,e</sup>
 
-- ^a Division of HIV, ID and Global Medicine, University of California San Francisco, San Francisco, USA
-- ^b Vaccine and Infectious Disease Division, Fred Hutchinson Cancer Center, Seattle, USA
-- ^c Centre for Computational Evolution, The University of Auckland, New Zealand
-- ^d School of Mathematical Sciences, University of Southampton, UK
-- ^e Howard Hughes Medical Institute, Seattle, USA
+- <sup>a</sup> Division of HIV, ID and Global Medicine, University of California San Francisco, San Francisco, USA
+- <sup>b</sup> Vaccine and Infectious Disease Division, Fred Hutchinson Cancer Center, Seattle, USA
+- <sup>c</sup> Centre for Computational Evolution, The University of Auckland, New Zealand
+- <sup>d</sup> School of Mathematical Sciences, University of Southampton, UK
+- <sup>e</sup> Howard Hughes Medical Institute, Seattle, USA
 
-*^1 Corresponding author*
+*<sup>1</sup> Corresponding author*
 
 **Contact:** <nicola.felix.mueller@gmail.com>
 
