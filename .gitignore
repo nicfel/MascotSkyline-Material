@@ -9,3 +9,6 @@
 *.tree
 *.state
 *.json
+*.zip
+*Rhistory
+*.fasta
