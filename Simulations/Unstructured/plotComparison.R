@@ -11,7 +11,7 @@ library("methods")
 library(colorblindr)
 require(ggtree)
 library(ggpubr)
-
+library(treeio)
 
 # clear workspace
 rm(list = ls())
@@ -25,6 +25,7 @@ log <- list.files(path="./out", pattern="*.log", full.names = TRUE)
 
 rootHeight=3.6771
 timepoints = seq(0,1,0.01)
+trueexpo = data.frame(coal = c(0.0012394, 27.2991), time_coal = rootHeight-c(0, 5))
 
 first = TRUE
 
@@ -62,7 +63,7 @@ for (i in seq(1,length(log),1)){
       }
     }
   }
-  system(paste("/Applications/BEAST\\ 2.6.4/bin/treeannotator -burnin 10", gsub(".log", ".trees", log[i]), "./out/summary.tree" ))
+  system(paste("/Applications/BEAST\\ 2.7.6/bin/treeannotator -burnin 10", gsub(".log", ".trees", log[i]), "./out/summary.tree" ))
   x <- read.beast("./out/summary.tree")
   p[[i]] = ggtree(x, right=TRUE, aes(color=max)) +
     scale_color_OkabeIto() +
@@ -93,7 +94,9 @@ p_ne1 <- ggplot(red.data1) +
   theme_minimal()+
   scale_color_OkabeIto(breaks=c("state0","state1"))+
   scale_fill_OkabeIto()+
-  scale_y_log10(limits=c(0.5,120)) +
+  scale_y_log10() +
+  coord_cartesian(ylim=c(0.5,120), xlim=c(0,rootHeight))+
+  geom_line(data=trueexpo,aes(x=time_coal, y=1/(2*coal)), linetype="dashed") +
   xlab("")+
   theme(legend.position = "none")
 
@@ -103,7 +106,9 @@ p_ne2 <- ggplot(red.data2) +
   theme_minimal()+
   scale_color_OkabeIto(breaks=c("state0","state1"))+
   scale_fill_OkabeIto()+
-  scale_y_log10(limits=c(0.5,120)) +
+  scale_y_log10() +
+  coord_cartesian(ylim=c(0.5,120), xlim=c(0,rootHeight))+
+  geom_line(data=trueexpo,aes(x=time_coal, y=1/(2*coal)), linetype="dashed") +
   xlab("")+
   theme(legend.position = "none")
 
@@ -116,7 +121,7 @@ red.arrow2 = arrow[which(arrow$run=="exponential"), ]
 p_arrow1 <- ggplot(red.arrow1) +
   geom_point(aes(x=round(x),y=round(y), color=state), size=10) +
   geom_curve(aes(x=x,y=y,xend=xend,yend=yend, color=state, size=size),curvature=-0.5,arrow = arrow(length = unit(0.03, "npc"))) +
-  scale_color_OkabeIto(order=c(2,1))+
+  scale_color_OkabeIto(breaks=c("state0","state1"))+
   scale_y_continuous(limits=c(0.5,1.5))+
   scale_x_continuous(limits=c(0.5,2.5))+
   scale_size_continuous(limits=c(0,max(arrow$size)), range=c(0,3)) +
@@ -126,7 +131,7 @@ p_arrow1 <- ggplot(red.arrow1) +
 p_arrow2 <- ggplot(red.arrow2) +
   geom_point(aes(x=round(x),y=round(y), color=state), size=10) +
   geom_curve(aes(x=x,y=y,xend=xend,yend=yend, color=state, size=size),curvature=-0.5,arrow = arrow(length = unit(0.03, "npc"))) +
-  scale_color_OkabeIto(order=c(2,1))+
+  scale_color_OkabeIto(breaks=c("state0","state1"))+
   scale_y_continuous(limits=c(0.5,1.5))+
   scale_x_continuous(limits=c(0.5,2.5))+
   scale_size_continuous(limits=c(0,max(arrow$size)), range=c(0,3)) +

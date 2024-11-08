@@ -146,7 +146,8 @@ p_ne1 <- ggplot(dat[which(dat$location=="Polynesia" | dat$location=="SouthAmeric
   scale_fill_manual(name="",values=cols)+
   scale_x_date()+
   xlab("")+
-  theme(legend.position = "top")+
+  theme(legend.position = "top", 
+        plot.margin=unit(c(0,0,0,0), "mm"))+
   coord_cartesian(ylim=c(0,100), xlim=c(as.Date("2013-01-01"),as.Date("2017-01-01")))
 plot(p_ne1)
 
@@ -158,8 +159,9 @@ p_ne2 <- ggplot(dat[which(dat$location=="Brazil North" | dat$location=="Brazil N
   scale_x_date()+
   xlab("")+
   coord_cartesian(ylim=c(0,100), xlim=c(as.Date("2013-01-01"),as.Date("2017-01-01")))+
-  theme(legend.position = "top")
-plot(p_ne2)
+  theme(legend.position = "top", 
+        plot.margin=unit(c(0,0,0,0), "mm"))
+  plot(p_ne2)
 
 
 p_ne3 <- ggplot(dat.const) +
@@ -326,11 +328,12 @@ p.events.skl = ggplot() +
              arrow = arrow(length = unit(0.03, "npc"),type = "closed"), curvature=0.3)+
   scale_color_manual(values=cols)+
   # theme(legend.position = "none") +
-  theme(plot.title = element_text(hjust = 0.5))+
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.margin=unit(c(8,8,8,8), "mm"))+
   ggtitle("MASCOT-Skyline") +
   scale_size_continuous(name="number of\nevents",limits=c(1,60),breaks=c(1,20,40),range = c(0.25, 2)) +
   guides(color=FALSE) +
-  theme(legend.position = c(0.2, 0.7))
+  theme(legend.position = c(0.2, -0.25))
 plot(p.events.skl)
 
 
@@ -342,7 +345,8 @@ p.events.con = ggplot() +
              arrow = arrow(length = unit(0.03, "npc"),type = "closed"), curvature=0.3)+
   scale_color_manual(values=cols) +
   theme(legend.position = "none") +
-  theme(plot.title = element_text(hjust = 0.5))+
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.margin=unit(c(8,8,8,8), "mm"))+
   ggtitle("MASCOT-Constant") +
   scale_size_continuous(limits=c(1,60),range = c(0.25, 2))
 
